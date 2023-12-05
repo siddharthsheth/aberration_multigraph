@@ -1,4 +1,5 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
+import os
 
 class SVVertex:
     def __init__(self, chrom, bp, dsb=None, rejoin=None, chromatin=None, digits_truncate=4):
@@ -8,6 +9,7 @@ class SVVertex:
         self.rejoin = rejoin
         self.chromatin = chromatin
         self.bp_digits_truncate = digits_truncate
+        self.occurrences = 1
 
     def amg_vertex(self):
         return (self.chrom, self.bp)
@@ -17,6 +19,9 @@ class SVVertex:
     
     def __hash__(self):
         return hash((self.chrom, self.bp))
+    
+    def __eq__(self, other):
+        return True if self.chrom == other.chrom and self.bp == other.bp else False
 
 class StructuralVariation:
     def __init__(self, c1, s1, e1, c2, s2, e2, sv_id, pe_support, str1, str2, svclass, svmethod):
@@ -40,45 +45,80 @@ class StructuralVariation:
     def __str__(self):
         return str((self.chrom1, self.start1, self.end1, self.chrom2, self.start2, self.end2))
 
+BreakLocation = namedtuple('BreakLocation', ['chrom', 'bp'])
 chromothripsis = '72f0a49a-aec8-47e5-846a-956c4da1507c.pcawg_consensus_1.6.161116.somatic.sv'
 simple = 'e1217ebe-1826-41a9-b6c4-702100a66f5e.pcawg_consensus_1.6.161116.somatic.sv'
 medium = '0ae2193f-0d68-485a-b8c2-7568cbcce33e.pcawg_consensus_1.6.161116.somatic.sv'
-file = medium
-file += '.txt'
-path = '/Users/siddharthsheth/Dropbox/work/research-projects/TQFT Cancer Progression/tcga/open/'
-log_file = '/Users/siddharthsheth/Dropbox/work/code-projects/aberration_multigraph/svlog.log'
+# file = simple
+# file += '.bedpe'
+# path = '/Users/siddharthsheth/Dropbox/work/research-projects/TQFT Cancer Progression/tcga/open/'
+dir_path = os.path.dirname(os.path.realpath(__file__))
+os.chdir(dir_path+'/..')
+data_path = 'data/tcga/open/'
+log_file = 'svlog.log'
 logs = []
-with open(file, 'r') as svfile:
-    headers = svfile.readline()
-    svs = []
-    vertices = dict()
-    for entry in svfile:
-        entry = entry.split()
-        sv = StructuralVariation(*entry)
-        svs.append(sv)
-        u_1, v_1, u_2, v_2 = SVVertex(int(entry[0]), int(entry[1])), SVVertex(int(entry[0]), int(entry[2])), SVVertex(int(entry[3]), int(entry[4])), SVVertex(int(entry[3]), int(entry[5]))
-        if u_1 in vertices:
-            # if vertices[u_1].strand1 == '-':
-            if vertices[u_1].strand1 == entry[8]:
-                logs.append(f'Duplicate rejoining \t\t\t vertex {str(u_1)} \t\t\t SV {str(sv)}')
+for i, file in enumerate(os.listdir(data_path)):
+    extension = file.split('.')[-1]
+    if extension != 'bedpe':
+        print(f'Skipped file number {i+1}: {file}')
+        continue
+    print(f'Working on file number {i+1}: {file}.')
+    old_logs = len(logs)
+    logs.append(f'File: {file}\n')
+    with open(data_path+file, 'r') as svfile:
+        headers = svfile.readline()
+        svs = []
+        bl_to_sv = defaultdict(dict)
+        for entry in svfile:
+            entry = entry.split()
+            sv = StructuralVariation(*entry)
+            svs.append(sv)
+            entry[0] = 23 if entry[0] == 'X' else entry[0]
+            entry[0] = 24 if entry[0] == 'Y' else entry[0]
+            entry[3] = 23 if entry[3] == 'X' else entry[3]
+            entry[3] = 24 if entry[3] == 'Y' else entry[3]
+            u_1, v_1, u_2, v_2 = BreakLocation(int(entry[0]), int(entry[1])), BreakLocation(int(entry[0]), int(entry[2])), BreakLocation(int(entry[3]), int(entry[4])), BreakLocation(int(entry[3]), int(entry[5]))
+            if u_1 in bl_to_sv:
+                bl_to_sv[u_1]['svs'].append((sv, 1))
             else:
-                logs.append(f'Potential reciprocal \t\t\t vertex {str(u_1)} \t\t\t SV {str(sv)}')
-        else:
-            vertices[u_1] = sv
-        if v_1 in vertices:
-            if vertices[v_1].strand1 == entry[9]:
-                logs.append(f'Duplicate rejoining \t\t\t vertex {str(u_1)} \t\t\t SV {str(sv)}')
+                # create new SVVertex for this location
+                bl_to_sv[u_1]['vertex'] = SVVertex(*u_1)
+                # update the StructuralVariation and the position in that SV this location belongs to
+                bl_to_sv[u_1]['svs'] = [(sv, 1)]
+            if v_1 in bl_to_sv:
+                bl_to_sv[v_1]['svs'].append((sv, 2))
             else:
-                logs.append(f'Potential reciprocal \t\t\t vertex {str(u_1)} \t\t\t SV {str(sv)}')
-        else:
-            vertices[v_1] = sv
-        if u_2 in vertices:
-            logs.append(f'Duplicate vertex: {str(u_2)}')
-        else:
-            vertices[u_2] = sv
-        if v_1 in vertices:
-            logs.append(f'Duplicate vertex: {str(v_1)}')
-        else:
-            vertices[v_2] = sv
+                # create new SVVertex for this location
+                bl_to_sv[v_1]['vertex'] = SVVertex(*v_1)
+                # update the StructuralVariation and the position in that SV this location belongs to
+                bl_to_sv[v_1]['svs'] = [(sv, 2)]
+            if u_2 in bl_to_sv:
+                bl_to_sv[u_2]['svs'].append((sv, 3))
+            else:
+                # create new SVVertex for this location
+                bl_to_sv[u_2]['vertex'] = SVVertex(*u_2)
+                # update the StructuralVariation and the position in that SV this location belongs to
+                bl_to_sv[u_2]['svs'] = [(sv, 3)]
+            if v_2 in bl_to_sv:
+                bl_to_sv[v_2]['svs'].append((sv, 4))
+            else:
+                # create new SVVertex for this location
+                bl_to_sv[v_2]['vertex'] = SVVertex(*v_2)
+                # update the StructuralVariation and the position in that SV this location belongs to
+                bl_to_sv[v_2]['svs'] = [(sv, 4)]
+            
+        for bp_loc in bl_to_sv:
+            if len(bl_to_sv[bp_loc]['svs']) > 2:
+                logs.append(f"{bp_loc} appears in {len(bl_to_sv[bp_loc]['svs'])} SVs.\n")
         
         
+        # for bl in bl_to_sv:
+        #     print(f'{bl}: {bl_to_sv[bl]}')
+
+        if len(logs)-old_logs == 1:
+            logs.append(f'No anomalies detected.\n----------------------\n')
+        else:
+            logs.append('----------------------\n\n')
+
+with open(log_file, 'a') as log:
+    log.writelines(logs)

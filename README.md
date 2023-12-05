@@ -19,9 +19,9 @@ Both, `AberrationMultigraph` and `StructuralVariation`, are different kinds of g
 Reciprocal SVs do not cause CNV. <!-- However, those SVs that do correspond to CNVs are important. -->
 3. A DSB edge can appear in at most 2 SVs.
 The same vertex of the DSB cannot participate in both SVs.
-4. There cannot be 2 DSB edges over successive base pairs, e.g., if $(u,v)$ and $(w,y)$ are consecutive DSB edges in the sorted list of DSB edges for a particular chromosome, then $w>v+1$.
+4. There cannot be 2 DSB edges over successive base pairs, e.g., if $(u,v)$ and $(w,y)$ are consecutive DSB edges in the sorted list of DSB edges for a particular chromosome, then $w\ge v+1$.
 
 
-[^1]: [[https://pubmed.ncbi.nlm.nih.gov/12385633/| Using graph theory to describe and model chromosome aberrations]]
-[^2]: [[https://www.nature.com/articles/s41586-019-1913-9 | Patterns of somatic structural variation in human cancer genomes]]
-[^3]: [[https://dcc.icgc.org/releases/PCAWG/consensus_sv | PCAWG Consensus Callsets for Structural Variants]]
+[^1]: [Using graph theory to describe and model chromosome aberrations] (https://pubmed.ncbi.nlm.nih.gov/12385633/)
+[^2]: [Patterns of somatic structural variation in human cancer genomes] (https://www.nature.com/articles/s41586-019-1913-9)
+[^3]: [PCAWG Consensus Callsets for Structural Variants] (https://dcc.icgc.org/releases/PCAWG/consensus_sv)
