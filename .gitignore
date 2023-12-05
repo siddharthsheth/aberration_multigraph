@@ -3,6 +3,7 @@
 *.pptx
 .DS_Store
 *.txt
+dsb_analysis/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

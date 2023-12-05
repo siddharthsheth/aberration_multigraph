@@ -209,6 +209,13 @@ class AberrationMultigraph:
             rejoin_edges.append(tuple(sorted((new_u, new_v))))
         return tuple(sorted(rejoin_edges))
 
+    def save_to_file(self):
+        pass
+
+    @staticmethod
+    def load_from_file(file):
+        pass
+    
     def __hash__(self) -> int:
         return hash(self.dsb_edges+self.rejoin_edges)
     
