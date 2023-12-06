@@ -1,6 +1,75 @@
 from collections import defaultdict, namedtuple
 import os
 
+class Patient:
+    def __init__(self, id):
+        self.id = id
+        self.sequence = []
+        self.svs = self.get_svs()
+
+    def get_sequence(self):
+        pass
+
+    def get_svs(self):
+        file = self.id+sv_extension
+        svs = []
+        with open(sv_path+file, 'r') as svfile:
+            _ = svfile.readline()                       # read headers
+            self.bl_to_sv = defaultdict(dict)
+            for entry in svfile:
+                entry = entry.split()
+                sv = StructuralVariation(*entry)
+                svs.append(sv)
+                chrom1 = self.chrom_to_int(entry[0])
+                chrom2 = self.chrom_to_int(entry[3])
+                bls = (BreakLocation(chrom1, int(entry[1])),
+                        BreakLocation(chrom1, int(entry[2])),
+                        BreakLocation(chrom2, int(entry[4])),
+                        BreakLocation(chrom2, int(entry[5]))
+                    )
+                for i, bl in enumerate(bls):
+                    self.create_sv_vertex(bl, i+1, sv)
+        return svs
+    
+    def chrom_to_int(self, chrom):
+        if chrom == 'X':
+            return 23
+        elif chrom == 'Y':
+            return 24
+        else:
+            return int(chrom)
+        
+
+    def create_sv_vertex(self, bl, pos, sv):
+        # check if SVVertex has already been created
+        if bl in self.bl_to_sv:
+            self.bl_to_sv[bl]['svs'].append((sv, pos))
+        else:
+            # create new SVVertex for this BreakLocation
+            self.bl_to_sv[bl]['vertex'] = SVVertex(*bl)
+            # update the StructuralVariation and the position in that SV this location belongs to
+            self.bl_to_sv[bl]['svs'] = [(sv, pos)]
+
+
+    def check_valid(self):
+        old_logs = len(logs)
+        logs.append(f'File: {self.id}\n')
+        
+        for bp_loc in self.bl_to_sv:
+            if len(self.bl_to_sv[bp_loc]['svs']) > 2:
+                logs.append(f"{bp_loc} appears in {len(self.bl_to_sv[bp_loc]['svs'])} SVs.\n")
+        
+        
+        # for bl in self.bl_to_sv:
+        #     print(f'{bl}: {self.bl_to_sv[bl]}')
+
+        if len(logs)-old_logs == 1:
+            logs.append(f'No anomalies detected.\n----------------------\n')
+        else:
+            logs.append('----------------------\n\n')
+
+
+
 class SVVertex:
     def __init__(self, chrom, bp, dsb=None, rejoin=None, chromatin=None, digits_truncate=4):
         self.chrom = chrom
@@ -49,76 +118,24 @@ BreakLocation = namedtuple('BreakLocation', ['chrom', 'bp'])
 chromothripsis = '72f0a49a-aec8-47e5-846a-956c4da1507c.pcawg_consensus_1.6.161116.somatic.sv'
 simple = 'e1217ebe-1826-41a9-b6c4-702100a66f5e.pcawg_consensus_1.6.161116.somatic.sv'
 medium = '0ae2193f-0d68-485a-b8c2-7568cbcce33e.pcawg_consensus_1.6.161116.somatic.sv'
-# file = simple
+files = [simple+'.bedpe']
 # file += '.bedpe'
 # path = '/Users/siddharthsheth/Dropbox/work/research-projects/TQFT Cancer Progression/tcga/open/'
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path+'/..')
-data_path = 'data/tcga/open/'
+sv_path = 'data/tcga/open/'
+cn_path = 'data/consensus.20170119.somatic.cna.tcga.public/'
+sv_extension = '.pcawg_consensus_1.6.161116.somatic.sv.bedpe'
+cn_extension = '.consensus.20170119.somatic.cna.txt'
 log_file = 'svlog.log'
 logs = []
-for i, file in enumerate(os.listdir(data_path)):
-    extension = file.split('.')[-1]
-    if extension != 'bedpe':
-        print(f'Skipped file number {i+1}: {file}')
-        continue
-    print(f'Working on file number {i+1}: {file}.')
-    old_logs = len(logs)
-    logs.append(f'File: {file}\n')
-    with open(data_path+file, 'r') as svfile:
-        headers = svfile.readline()
-        svs = []
-        bl_to_sv = defaultdict(dict)
-        for entry in svfile:
-            entry = entry.split()
-            sv = StructuralVariation(*entry)
-            svs.append(sv)
-            entry[0] = 23 if entry[0] == 'X' else entry[0]
-            entry[0] = 24 if entry[0] == 'Y' else entry[0]
-            entry[3] = 23 if entry[3] == 'X' else entry[3]
-            entry[3] = 24 if entry[3] == 'Y' else entry[3]
-            u_1, v_1, u_2, v_2 = BreakLocation(int(entry[0]), int(entry[1])), BreakLocation(int(entry[0]), int(entry[2])), BreakLocation(int(entry[3]), int(entry[4])), BreakLocation(int(entry[3]), int(entry[5]))
-            if u_1 in bl_to_sv:
-                bl_to_sv[u_1]['svs'].append((sv, 1))
-            else:
-                # create new SVVertex for this location
-                bl_to_sv[u_1]['vertex'] = SVVertex(*u_1)
-                # update the StructuralVariation and the position in that SV this location belongs to
-                bl_to_sv[u_1]['svs'] = [(sv, 1)]
-            if v_1 in bl_to_sv:
-                bl_to_sv[v_1]['svs'].append((sv, 2))
-            else:
-                # create new SVVertex for this location
-                bl_to_sv[v_1]['vertex'] = SVVertex(*v_1)
-                # update the StructuralVariation and the position in that SV this location belongs to
-                bl_to_sv[v_1]['svs'] = [(sv, 2)]
-            if u_2 in bl_to_sv:
-                bl_to_sv[u_2]['svs'].append((sv, 3))
-            else:
-                # create new SVVertex for this location
-                bl_to_sv[u_2]['vertex'] = SVVertex(*u_2)
-                # update the StructuralVariation and the position in that SV this location belongs to
-                bl_to_sv[u_2]['svs'] = [(sv, 3)]
-            if v_2 in bl_to_sv:
-                bl_to_sv[v_2]['svs'].append((sv, 4))
-            else:
-                # create new SVVertex for this location
-                bl_to_sv[v_2]['vertex'] = SVVertex(*v_2)
-                # update the StructuralVariation and the position in that SV this location belongs to
-                bl_to_sv[v_2]['svs'] = [(sv, 4)]
-            
-        for bp_loc in bl_to_sv:
-            if len(bl_to_sv[bp_loc]['svs']) > 2:
-                logs.append(f"{bp_loc} appears in {len(bl_to_sv[bp_loc]['svs'])} SVs.\n")
-        
-        
-        # for bl in bl_to_sv:
-        #     print(f'{bl}: {bl_to_sv[bl]}')
+patient_ids = [file.split('.')[0] for file in files]
+# patient_ids = [file.split('.')[0] for file in os.listdir(sv_path)]
 
-        if len(logs)-old_logs == 1:
-            logs.append(f'No anomalies detected.\n----------------------\n')
-        else:
-            logs.append('----------------------\n\n')
+for i, id in enumerate(patient_ids):
+    print(f'Working on patient number {i+1}: {id}.')
+    patient = Patient(id)
+    patient.check_valid() 
 
-with open(log_file, 'a') as log:
+with open(log_file, 'w') as log:
     log.writelines(logs)
