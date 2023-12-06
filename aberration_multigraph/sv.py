@@ -4,12 +4,22 @@ import os
 class Patient:
     def __init__(self, id):
         self.id = id
-        self.sequence = []
+        self.sequence = self.get_sequence()
         self.svs = self.get_svs()
+        self.logs = []
 
     def get_sequence(self):
-        pass
-
+        file = self.id+cn_extension
+        sequence = defaultdict(list)
+        with open(cn_path+file, 'r') as cnfile:
+            _ = cnfile.readline()                       # read headers
+            for entry in cnfile:
+                entry = entry.split()
+                chrom = self.chrom_to_int(entry[0])
+                segment = [x if x == 'NA' else int(x)  for x in entry[1:]]
+                sequence[chrom].append(CNSegment(*segment))
+        return sequence
+            
     def get_svs(self):
         file = self.id+sv_extension
         svs = []
@@ -18,14 +28,14 @@ class Patient:
             self.bl_to_sv = defaultdict(dict)
             for entry in svfile:
                 entry = entry.split()
+                entry[0] = self.chrom_to_int(entry[0])
+                entry[3] = self.chrom_to_int(entry[3])
                 sv = StructuralVariation(*entry)
                 svs.append(sv)
-                chrom1 = self.chrom_to_int(entry[0])
-                chrom2 = self.chrom_to_int(entry[3])
-                bls = (BreakLocation(chrom1, int(entry[1])),
-                        BreakLocation(chrom1, int(entry[2])),
-                        BreakLocation(chrom2, int(entry[4])),
-                        BreakLocation(chrom2, int(entry[5]))
+                bls = (BreakLocation(entry[0], int(entry[1])),
+                        BreakLocation(entry[0], int(entry[2])),
+                        BreakLocation(entry[3], int(entry[4])),
+                        BreakLocation(entry[3], int(entry[5]))
                     )
                 for i, bl in enumerate(bls):
                     self.create_sv_vertex(bl, i+1, sv)
@@ -52,22 +62,29 @@ class Patient:
 
 
     def check_valid(self):
-        old_logs = len(logs)
-        logs.append(f'File: {self.id}\n')
+        old_logs = len(self.logs)
+        self.logs.append(f'File: {self.id}\n')
         
         for bp_loc in self.bl_to_sv:
             if len(self.bl_to_sv[bp_loc]['svs']) > 2:
-                logs.append(f"{bp_loc} appears in {len(self.bl_to_sv[bp_loc]['svs'])} SVs.\n")
+                self.logs.append(f"{bp_loc} appears in {len(self.bl_to_sv[bp_loc]['svs'])} SVs.\n")
         
         
         # for bl in self.bl_to_sv:
         #     print(f'{bl}: {self.bl_to_sv[bl]}')
 
-        if len(logs)-old_logs == 1:
-            logs.append(f'No anomalies detected.\n----------------------\n')
+        if len(self.logs)-old_logs == 1:
+            self.logs.append(f'No anomalies detected.\n----------------------\n')
         else:
-            logs.append('----------------------\n\n')
+            self.logs.append('----------------------\n\n')
 
+    def check_sequence_complete(self):
+        for chrom in self.sequence:
+            for i in range(1, len(self.sequence[chrom])):
+                if self.sequence[chrom][i].start - self.sequence[chrom][i-1].end > 1:
+                    self.logs.append(f'Missing bps in chromosome {chrom}: {self.sequence[chrom][i-1].end} to {self.sequence[chrom][i].start}.')
+                elif self.sequence[chrom][i].start - self.sequence[chrom][i-1].end < 1:
+                    self.logs.append(f'Duplicate bps sequenced in chromosome {chrom}: {self.sequence[chrom][i].start} to {self.sequence[chrom][i-1].end}.')
 
 
 class SVVertex:
@@ -115,6 +132,8 @@ class StructuralVariation:
         return str((self.chrom1, self.start1, self.end1, self.chrom2, self.start2, self.end2))
 
 BreakLocation = namedtuple('BreakLocation', ['chrom', 'bp'])
+CNSegment = namedtuple('CNSegment', ['start', 'end', 'total_cn', 'major_cn', 'minor_cn', 'star'])
+
 chromothripsis = '72f0a49a-aec8-47e5-846a-956c4da1507c.pcawg_consensus_1.6.161116.somatic.sv'
 simple = 'e1217ebe-1826-41a9-b6c4-702100a66f5e.pcawg_consensus_1.6.161116.somatic.sv'
 medium = '0ae2193f-0d68-485a-b8c2-7568cbcce33e.pcawg_consensus_1.6.161116.somatic.sv'
