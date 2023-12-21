@@ -10,21 +10,16 @@ class AberrationMultigraph:
         self.dsb_edges = tuple(sorted(tuple(sorted(edge)) for edge in dsb_edges))
         self.rejoin_edges = tuple(sorted(tuple(sorted(edge)) for edge in rejoin_edges))
         self.name = name
-        # print(self.chromatin_edges)
-        # print(self.dsb_edges)
-        # print(self.rejoin_edges)
         self.graph.add_edges_from(self.chromatin_edges, color='chromatin')
         self.graph.add_edges_from(self.dsb_edges, color='dsb')
         self.graph.add_edges_from(self.rejoin_edges, color='misrejoining')
         chromosome = 0
         dsb_ends = 0
         free_ends = set(u for (u,v) in self.dsb_edges).union(set(v for (u,v) in self.dsb_edges))
-        # print(self.graph.nodes['A'])
         for i in self.graph.nodes:
             if i not in free_ends:
                 dsb_ends += 1
             self.graph.nodes[i]['chromosome'] = chromosome
-            # print(f'{i}, {chromosome}')
             if dsb_ends == 2:
                 chromosome += 1
                 dsb_ends = 0
@@ -210,10 +205,12 @@ class AberrationMultigraph:
         return tuple(sorted(rejoin_edges))
 
     def save_to_file(self):
+        #TODO: add method to save an AMG to a file.
         pass
 
     @staticmethod
     def load_from_file(file):
+        #TODO: add method to load AMG from a file.
         pass
     
     def __hash__(self) -> int:
