@@ -1,0 +1,2 @@
+chrom1	start1	end1	chrom2	start2	end2	sv_id	pe_support	strand1	strand2	svclass	svmethod
+14	86931938	86931939	2	179682531	179682532	SVMERGE1	9	+	+	TRA	SNOWMAN_dRANGER

@@ -1,0 +1,2 @@
+chrom1	start1	end1	chrom2	start2	end2	sv_id	pe_support	strand1	strand2	svclass	svmethod
+1	2152003	2152004	1	2155188	2155189	SVMERGE1	44	+	-	DEL	SNOWMAN_BRASS_dRANGER_DELLY

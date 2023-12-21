@@ -1,0 +1,2 @@
+chrom1	start1	end1	chrom2	start2	end2	sv_id	pe_support	strand1	strand2	svclass	svmethod
+7	138543665	138543666	7	140492246	140492247	SVMERGE1	13	-	+	DUP	SNOWMAN_BRASS
