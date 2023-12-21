@@ -4,7 +4,32 @@ from matplotlib import pyplot as plt
 from collections import Counter
 
 class AberrationMultigraph:
-    """_summary_
+    """
+    A class to store aberration multigraphs as defined by Sachs et al.
+    An AMG corresponding to a chromosome aberration is defined by
+     chromatin edges, double-strand break edges and rejoin edges.
+    The graph is stored as a networkx.Graph object.
+    This class includes methods to compute basic properties of AMGs such as 
+     diameter, girth and cycle structure.
+    There is also a method to draw an AMG, but it should only be used for simple
+     AMGs.
+    Finally, there are also methods to perform combinatorial transformations on
+     AMGs such as chromosome edge swaps, total swaps and total twists.
+    Additionally, AMGs can be saved to files and recovered from previously saved
+     files.
+
+    Attributes
+    ----------
+    chromatin_edges : tuple
+        Collection of chromatin edges in the AMG.
+    dsb_edges : tuple
+        Collection of edges corresponding to double-strand breaks.
+    rejoin_edges : tuple
+        Collection of edges corresponding to rejoins.
+    graph : networkx.Graph
+        The aberration multigraph defined by the above edges.
+    num_chromosome : int
+        The number of chromosomes in the AMG.
     """
     def __init__(self, chromatin_edges, dsb_edges, rejoin_edges, name=''):
         """
@@ -59,6 +84,10 @@ class AberrationMultigraph:
         return np.inf if not self.is_connected() \
                         else nx.distance_measures.diameter(self.graph)
     
+    def girth(self):
+        #TODO
+        pass
+
     def cycles(self):
         """Method to compute the cycles in the AMG.
 
@@ -149,6 +178,9 @@ class AberrationMultigraph:
 
     def draw(self):
         """Method to draw an AMG.
+
+        This method should be called after instantiating a
+         matplotlib.pyplot.figure object.
         """
         pos = nx.multipartite_layout(self.graph,
                                         subset_key='chromosome',

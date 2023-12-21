@@ -2,6 +2,18 @@ from collections import defaultdict, namedtuple
 import os
 
 BreakLocation = namedtuple('BreakLocation', ['chrom', 'bp'])
+BreakLocation.__doc__ = """
+A breakpoint location in a chromosome.
+
+Parameters
+----------
+chrom : int
+    The chromosome in which the break occurred.
+
+bp : int
+    The base pair where the break occurred.
+"""
+
 CNSegment = namedtuple('CNSegment', ['start', 
                                      'end', 
                                      'total_cn', 
@@ -9,9 +21,65 @@ CNSegment = namedtuple('CNSegment', ['start',
                                      'minor_cn', 
                                      'star'
                                     ])
+CNSegment.__doc__ = """
+A contiguous segment in a chromosome whose copy number was sequenced.
+Should be stored as a dictionary keyed by chromosome number.
+The parameters follow from the PCAWG project dataset.
+
+Parameters
+----------
+start : int
+    The base pair where this copy number segment begins.
+end : int
+    The base pair where this copy number segment ends.
+total_cn : int
+    The total copy number of this segment.
+major_cn : int
+    The major copy number of this segment.
+minor_cn : int
+    The minor copy number of this segment.
+star : int
+    The confidence of the measurement.
+"""
 
 class SVVertex:
+    """
+    A class to represent vertices in structural variations.
+
+    There should be only one SVVertex per BreakLocation.
+
+    Attributes
+    ----------
+    chrom : int
+        The chromosome this SVVertex belongs to.
+    bp : int
+        The base pair location of this SVVertex.
+    dsb : SVVertex
+        If this SVVertex is involved in a double-strand break edge.
+    rejoin : SVVertex
+        If this SVVertex is involved in a rejoin with another SVVertex.
+    chromatin : SVVertex
+        If this SVVertex is the chromatin neighbor of another SVVertex.
+    """
     def __init__(self, chrom, bp, dsb=None, rejoin=None, chromatin=None):
+        """_summary_
+
+        Parameters
+        ----------
+        chrom : int
+            The chromosome this SVVertex belongs to.
+        bp : int
+            The base pair location of this SVVertex.
+        dsb : SVVertex, optional
+            If this SVVertex is involved in a double-strand break edge,
+             by default None
+        rejoin : SVVertex, optional
+            If this SVVertex is involved in a rejoin with another SVVertex,
+             by default None
+        chromatin : SVVertex, optional
+            If this SVVertex is the chromatin neighbor of another SVVertex,
+             by default None
+        """
         self.chrom = chrom
         self.bp = bp
         self.dsb = dsb

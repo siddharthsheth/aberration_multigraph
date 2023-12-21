@@ -4,25 +4,37 @@ from collections import defaultdict
 from matplotlib import pyplot as plt
 
 class AMGGenerator:
+    """
+    This class represents an object that generates all possible AMGs with
+     a specified number of chromosomes and number of double-strand breaks per
+     chromosome using a brute-force approach.
+    """
     def __init__(self, num_chromosomes, num_dsbs, labels=None):
+        """
+        Parameters
+        ----------
+        num_chromosomes : int
+            The number of chromosomes in the generated AMGs.
+        num_dsbs : iterable
+            The number of DSBs per chromosome.
+        labels : str, optional
+            Names of AMG vertices, by default None
+        """
         self.num_chromosomes = num_chromosomes
         self.num_dsbs = num_dsbs
+        if len(num_dsbs) != num_chromosomes:
+            print('Mismatch')               #TODO raise ValueError
         self.vertices = self._generate_labels() if labels is None else labels
         self.dsbs = self._generate_dsbs()
         self.chromatins = self._generate_chromatin_edges()
-        # self.free_ends = set(i for i in self.vertices if (i,i+1) in self.dsbs or (i-1, i) in self.dsbs)
         self.free_ends = set(u for (u,v) in self.dsbs).union(set(v for (u,v) in self.dsbs))
         self.dsb_pair = dict()
         self.amg_counter = 1
-        # self.labels = labels
         for i, j in self.dsbs:
             self.dsb_pair[i] = j
             self.dsb_pair[j] = i
         
     def generate_amgs(self):
-        # print(self.vertices)
-        # print(self.dsbs)
-        # print(self.free_ends)
         unpaired_vertices = [(len(self.free_ends)-2, i) for i in self.free_ends]
         hq.heapify(unpaired_vertices)
         rejoinings = []
@@ -32,22 +44,29 @@ class AMGGenerator:
         _, vertex = hq.heappop(unpaired_vertices)
         if len(unpaired_vertices) == 1:
             _, last_vertex = hq.heappop(unpaired_vertices)
-            # print(f'generating AMG: {rejoinings+[(vertex, last_vertex)]}')
-            amg = AberrationMultigraph(self.chromatins, self.dsbs, rejoinings+[(vertex, last_vertex)], str(self.amg_counter))
+            amg = AberrationMultigraph(self.chromatins,
+                                        self.dsbs,
+                                        rejoinings+[(vertex, last_vertex)],
+                                        str(self.amg_counter))
             self.amg_counter += 1
             if amg.is_connected():
                 yield amg
         else:
             for _, vertex_to_pair in unpaired_vertices:
                 if vertex_to_pair != self.dsb_pair[vertex]:
-                    new_unpaired_vertices = self._generate_new_unpaired_vertices(unpaired_vertices, vertex, vertex_to_pair)
+                    new_unpaired_vertices = self._get_new_unpaired_vertices(
+                                                            unpaired_vertices,
+                                                            vertex,
+                                                            vertex_to_pair)
                     # print(f'nested call: {new_unpaired_vertices}, {rejoinings+[(vertex, vertex_to_pair)]}')
-                    yield from self._generate_permutations(rejoinings+[(vertex, vertex_to_pair)], new_unpaired_vertices)
+                    yield from self._generate_permutations(rejoinings+[(vertex, vertex_to_pair)],
+                                                           new_unpaired_vertices)
 
-    def _generate_new_unpaired_vertices(self, unpaired_vertices, vertex, vertex_to_pair):
+    def _get_new_unpaired_vertices(self, unpaired_vertices, vertex, vertex_to_pair):
         new_unpaired_vertices = []
         for priority, unpaired_vertex in unpaired_vertices:
-            if self.dsb_pair[unpaired_vertex] == vertex or self.dsb_pair[unpaired_vertex] == vertex_to_pair:
+            if (self.dsb_pair[unpaired_vertex] == vertex
+                    or self.dsb_pair[unpaired_vertex] == vertex_to_pair):
                 new_unpaired_vertices.append((priority-1, unpaired_vertex))
             elif unpaired_vertex != vertex_to_pair:
                 new_unpaired_vertices.append((priority-2, unpaired_vertex))
