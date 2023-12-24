@@ -85,8 +85,16 @@ class AberrationMultigraph:
                         else nx.distance_measures.diameter(self.graph)
     
     def girth(self):
-        #TODO
-        pass
+        """Method to compute girth of the AMG.
+
+        Returns
+        -------
+        int
+            Girth of the AMG.
+            Returns numpy.inf if there are no cycles.
+        """
+        return min([len(c) for c in nx.simple_cycles(self.graph)])
+        # return nx.cycles.girth(self.graph)
 
     def cycles(self):
         """Method to compute the cycles in the AMG.
@@ -475,27 +483,3 @@ class AberrationMultigraph:
                         and self.dsb_edges == other.dsb_edges 
                         and self.rejoin_edges == other.rejoin_edges
                     else False)
-
-if __name__ == '__main__':
-    # amg_1 = AberrationMultigraph((('A','B'), ('C','D'), ('E','F'), ('G','H'), ('I','J'), ('K','L')), (('B','C'), ('D','E'), ('H','I'), ('J','K')), (('B', 'H'), ('D', 'J'), ('C', 'I'), ('E', 'K')))
-    # amg_2 = AberrationMultigraph((('A','B'), ('C','D'), ('E','F'), ('G','H'), ('I','J'), ('K','L')), (('B','D'), ('C','E'), ('H','I'), ('J','K')), (('B', 'H'), ('D', 'J'), ('C', 'I'), ('E', 'K')))
-    # amg_1 = AberrationMultigraph([(1,2), (3,4), (5,6), (7,8), (9,10), (11,12)], [(2,3),(4,5),(8,9),(10,11)], [(2,10), (3,11), (4,9), (5,8)])
-    # amg_1 = AberrationMultigraph([(1,2),(3,4),(5,6),(7,8),(9,10)], [(2,3),(4,5),(6,7),(8,9)], [(2,9), (3,4),(5,7),(6,8)])
-    amg_1 = AberrationMultigraph([(1,2),(3,4),(5,6),(7,8),(9,10),(11,12),(13,14),(15,16)], [(2,3),(6,7),(10,11),(14,15)], [(2,6),(3,11),(7,14),(10,15)])
-    amg_2 = amg_1.total_swap(0,1)
-    amg_3 = amg_1.total_swap(0,2)
-    amg_4 = amg_2.total_swap(2,3)
-    plt.subplot(2,2,1)
-    amg_1.draw()
-    plt.subplot(2,2,2)
-    amg_2.draw()
-    plt.subplot(2,2,3)
-    amg_3.draw()
-    plt.subplot(2,2,4)
-    amg_4.draw()
-    plt.show()
-    # amg = AberrationMultigraph([1,2,3,4], [(2,3)], [(1,2), (3,4)])
-    
-    # print(amg.initial)
-    # print(amg.final)
-    # print(amg.diameter())

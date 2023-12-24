@@ -47,7 +47,6 @@ class SVVertex:
     A class to represent vertices in structural variations.
 
     There should be only one SVVertex per BreakLocation.
-
     Attributes
     ----------
     chrom : int
@@ -85,6 +84,9 @@ class SVVertex:
         self.dsb = dsb
         self.rejoin = rejoin
         self.chromatin = chromatin
+        # The reason this is a class instead of a namedtuple is that dsb, rejoin
+        # and chromatin attributes are mutable.
+        # TODO: incorporate copy numbers?
 
     def amg_vertex(self):
         return (self.chrom, self.bp)
@@ -131,6 +133,4 @@ StructuralVariation = namedtuple('StructuralVariation', ['chrom1',
                                                          'strand1', 
                                                          'strand2', 
                                                          'svclass', 
-                                                         'svmethod'
-                                                        ])
-
+                                                         'svmethod'])

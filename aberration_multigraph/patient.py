@@ -17,7 +17,8 @@ class Patient:
         Determines the dataset containing the patient.
         Either 'tcga' or 'icgc'.
     logs : list
-        A list of strings to store logging information.
+        A list of pairs of strings to store logging information and their
+         priorities.
     bl_to_sv : defaultdict(dict)
         A dictionary to map BreakLocation to SVVertex.
         This prevents constructing multiple SVVertex objects for the same
@@ -229,7 +230,7 @@ class Patient:
         Any discrepancies observed while checking are stored in `logs`.
         """
         valid = True
-        self.logs.append(f'Patient {self.id}\n')
+        self.logs.append((5, f'Patient {self.id}\n'))
 
         if not self._check_sequence_complete():
             valid = False
@@ -239,7 +240,7 @@ class Patient:
         # for bl in self.bl_to_sv:
         #     print(f'{bl}: {self.bl_to_sv[bl]}')
 
-        self.logs.append('----------------------\n\n')
+        self.logs.append((5, '----------------------\n\n'))
         return valid
 
     def _check_sequence_complete(self):
@@ -258,15 +259,21 @@ class Patient:
         old_logs = len(self.logs)
         for chrom in range(1,24):
             if chrom not in self.sequence:
-                self.logs.append(f'Chromosome {chrom} not sequenced.\n')
+                self.logs.append((5, f'Chromosome {chrom} not sequenced.\n'))
         for chrom in self.sequence:
             for i in range(1, len(self.sequence[chrom])):
                 if self.sequence[chrom][i].start - self.sequence[chrom][i-1].end > 1:
-                    self.logs.append(f'Patient {self.id}: Missing bps in chromosome {chrom}: {self.sequence[chrom][i-1].end} to {self.sequence[chrom][i].start}.\n')
+                    self.logs.append((5, f"""Patient {self.id}: 
+                                        Missing bps in chromosome {chrom}:
+                                        {self.sequence[chrom][i-1].end} to
+                                        {self.sequence[chrom][i].start}.\n"""))
                 elif self.sequence[chrom][i].start - self.sequence[chrom][i-1].end < 1:
-                    self.logs.append(f'Patient {self.id}: Duplicate bps sequenced in chromosome {chrom}: {self.sequence[chrom][i].start} to {self.sequence[chrom][i-1].end}.\n')
+                    self.logs.append((5, f"""Patient {self.id}:
+                                        Duplicate bps sequenced in chromosome {chrom}:
+                                        {self.sequence[chrom][i].start} to
+                                        {self.sequence[chrom][i-1].end}.\n"""))
         if len(self.logs) == old_logs:
-            self.logs.append(f'Patient {self.id}: Sequencing data is complete.\n')
+            self.logs.append((5, f'Patient {self.id}: Sequencing data is complete.\n'))
             return True
         else:
             return False
@@ -310,7 +317,7 @@ class Patient:
         
         # log = f'Patient {self.id}: Copy number not found for break location {bl}.'
         if len(self.sequence[chrom]) == 0:
-            logs.append(f'Unsequenced chromosome: {chrom} for {bl}')
+            logs.append((5, f'Unsequenced chromosome: {chrom} for {bl}'))
             return (0, 'Not sequenced')
         if bp < self.sequence[chrom][0].start:
             return (0, '<')
@@ -373,36 +380,51 @@ class Patient:
                 bp_add_slack_cn = self._bp_loc_cn(bp_add_slack)[0]
                 if error == 0:
                     if bp_less_slack_cn <= copies:
-                        pass
-                        # self.logs.append(f"Patient {self.id}: {bp_loc} is rejoined in {rejoins} SVs while CN is {copies}. But a location -{self.bp_slack} is fine.\n")
+                        self.logs.append((1, f"""Patient {self.id}: {bp_loc} is rejoined
+                                          in {rejoins} SVs while CN is {copies}.
+                                          But a location -{self.bp_slack} is fine.\n"""))
                     elif  bp_add_slack_cn <= copies:
-                        pass
-                        # self.logs.append(f"Patient {self.id}: {bp_loc} is rejoined in {rejoins} SVs while CN is {copies}. But a location +{self.bp_slack} is fine.\n")
+                        self.logs.append((1, f"""Patient {self.id}: {bp_loc} is rejoined
+                                          in {rejoins} SVs while CN is {copies}.
+                                          But a location +{self.bp_slack} is fine.\n"""))
                     else:
-                        self.logs.append(f"Patient {self.id}: {bp_loc} is rejoined in {rejoins} SVs while CN is {copies}.\n")
+                        self.logs.append((5, f"""Patient {self.id}: {bp_loc} is rejoined
+                                          in {rejoins} SVs while CN is {copies}.\n"""))
                 elif error == '<':
                     if bp_add_slack_cn <= copies:
-                        pass
-                        # self.logs.append(f'Patient {self.id}: {bp_loc} CN not found for break location. Location less than sequenced range. But a location +{self.bp_slack} is fine.\n')
+                        self.logs.append((1, f"""Patient {self.id}:
+                                          {bp_loc} CN not found for break location.
+                                          Location less than sequenced range.
+                                          But a location +{self.bp_slack} is fine.\n"""))
                     else:
-                        self.logs.append(f'Patient {self.id}: {bp_loc} CN not found for break location. Location less than sequenced range.\n')
+                        self.logs.append((5, f"""Patient {self.id}:
+                                          {bp_loc} CN not found for break location.
+                                          Location less than sequenced range.\n"""))
                 elif error == '>':
                     if bp_less_slack_cn  <= copies:
-                        pass
-                        # self.logs.append(f'Patient {self.id}: {bp_loc} CN not found for break location. Location greater than sequenced range. But a location -{self.bp_slack} is fine.\n')
+                        self.logs.append((1, f"""Patient {self.id}:
+                                          {bp_loc} CN not found for break location.
+                                          Location greater than sequenced range.
+                                          But a location -{self.bp_slack} is fine.\n"""))
                     else:
-                        self.logs.append(f'Patient {self.id}: {bp_loc} CN not found for break location. Location greater than sequenced range.\n')
+                        self.logs.append((5, f"""Patient {self.id}:
+                                          {bp_loc} CN not found for break location.
+                                          Location greater than sequenced range.\n"""))
                 elif error == 'NA':
-                    self.logs.append(f'Patient {self.id}: {bp_loc} CN not found for break location. Marked NA.\n')
+                    self.logs.append((5, f"""Patient {self.id}:
+                                      {bp_loc} CN not found for break location.
+                                      Marked NA.\n"""))
                 else:
-                    self.logs.append(f'Patient {self.id}: {bp_loc} CN not found for break location.\n')
+                    self.logs.append((5, f"""Patient {self.id}:
+                                      {bp_loc} CN not found for break location.\n"""))
         if len(self.logs) == old_logs:
-            self.logs.append(f'Patient {self.id}: Success! For every breakpoint #(rejoins) <= #(copies).\n')
+            self.logs.append((5, f"""Patient {self.id}: Success!
+                              For every breakpoint #(rejoins) <= #(copies).\n"""))
             return True
         else:
             return False
 
-    def write_logs(self, log_file):
+    def write_logs(self, log_file, priority_level=5):
         """Write logging info to file and clear logs.
 
         Parameters
@@ -411,7 +433,8 @@ class Patient:
             The file to which the log data is appended.
         """
         with open(log_file, 'a') as log:
-            log.writelines(patient.logs)
+            log.writelines(log for priority, log in patient.logs
+                            if priority >= priority_level)
         patient.logs = []
 
 
@@ -424,15 +447,15 @@ files = [simple, medium]
 dir_path = os.path.dirname(os.path.realpath(__file__))
 os.chdir(dir_path+'/..')
 # datasets = ['tcga', 'icgc']
-datasets = ['icgc']
+datasets = ['tcga']
 log_file = 'svlog.log'
 if os.path.exists(log_file):
     os.remove(log_file)
 logs = []
 for dataset in datasets:
     sv_path = f'data/{dataset}_sv/open/'
-    # patient_ids = [file.split('.')[0] for file in files]
     patient_ids = [file.split('.')[0] for file in os.listdir(sv_path)]
+    patient_ids = [file.split('.')[0] for file in files]
     for i, id in enumerate(patient_ids):
         print(f'Working on patient number {i+1}: {id}.')
         patient = Patient(id, dataset)
