@@ -1,7 +1,6 @@
 import heapq as hq
 from aberration_multigraph.amg import AberrationMultigraph
 from collections import defaultdict
-from matplotlib import pyplot as plt
 
 class AMGGenerator:
     """
@@ -37,7 +36,7 @@ class AMGGenerator:
             self.dsb_pair[j] = i
         
     def generate_amgs(self):
-        """This method builds all possible AMGs for this DSB distribution.
+        """This method constructs all possible AMGs for this DSB distribution.
 
         It returns a generator that builds the AMGs.
         

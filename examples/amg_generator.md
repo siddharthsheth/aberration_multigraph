@@ -20,7 +20,7 @@ amg_gen.summarize()
 
 ## Accessing All Proper AMGs
 
-This code chunk shows how to draw all possible proper AMGs with 3 chromosomes with 1 DSB each.
+This code chunk shows how to draw all possible proper AMGs over 3 chromosomes with 1 DSB each.
 There are just 8 AMGs in this case.
 
 ```python{cmd, matplotlib, continue=setup}

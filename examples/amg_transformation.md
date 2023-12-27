@@ -1,9 +1,9 @@
+# Transformations on AMGs
+
 ```python{cmd=true, id=setup, hide=true}
 from aberration_multigraph.amg import AberrationMultigraph
 from matplotlib import pyplot as plt
 ```
-
-# Transformations on AMGs
 
 Here, we illustrate the dynamics of AMGs using the following as an example.
 

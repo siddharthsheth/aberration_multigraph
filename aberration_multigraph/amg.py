@@ -46,25 +46,22 @@ class AberrationMultigraph:
         """
         self.graph = nx.Graph()
         self.chromatin_edges = tuple(sorted(
-                                tuple(sorted(edge)) for edge in chromatin_edges
-                                ))
+                            tuple(sorted(edge)) for edge in chromatin_edges))
         self.dsb_edges = tuple(sorted(
-                                tuple(sorted(edge)) for edge in dsb_edges
-                                ))
+                            tuple(sorted(edge)) for edge in dsb_edges))
         self.rejoin_edges = tuple(sorted(
-                                tuple(sorted(edge)) for edge in rejoin_edges
-                                ))
+                            tuple(sorted(edge)) for edge in rejoin_edges))
         self.name = name
         self.graph.add_edges_from(self.chromatin_edges, color='chromatin')
         self.graph.add_edges_from(self.dsb_edges, color='dsb')
         self.graph.add_edges_from(self.rejoin_edges, color='misrejoining')
         chromosome = 0
         dsb_ends = 0
-        free_ends = set(u for (u,v) in self.dsb_edges).union(
-                                            set(v for (u,v) in self.dsb_edges)
+        dsb_vertices = set(u for (u,_) in self.dsb_edges).union(
+                                            set(v for (_,v) in self.dsb_edges)
                                             )
         for i in self.graph.nodes:
-            if i not in free_ends:
+            if i not in dsb_vertices:
                 dsb_ends += 1
             self.graph.nodes[i]['chromosome'] = chromosome
             if dsb_ends == 2:
@@ -81,8 +78,8 @@ class AberrationMultigraph:
             Diameter of the AMG.
             Returns numpy.inf if the graph is not connected.
         """
-        return np.inf if not self.is_connected() \
-                        else nx.distance_measures.diameter(self.graph)
+        return (np.inf if not self.is_connected()
+                        else nx.distance_measures.diameter(self.graph))
     
     def girth(self):
         """Method to compute girth of the AMG.
@@ -91,7 +88,7 @@ class AberrationMultigraph:
         -------
         int
             Girth of the AMG.
-            Returns numpy.inf if there are no cycles.
+            Returns numpy.inf if there are no cycles in case of an incomplete AMG.
         """
         return min([len(c) for c in nx.simple_cycles(self.graph)])
         # As per networkx documentation the following should work, but doesn't.
@@ -106,8 +103,8 @@ class AberrationMultigraph:
             Collection of cycles present in the AMG.
         """
         return nx.cycles.cycle_basis(nx.Graph([
-            (u,v) for u,v,color in self.graph.edges.data('color') if color!='chromatin'
-            ]))
+            (u,v) for u,v,color in self.graph.edges.data('color')
+                    if color!='chromatin' ]))
     
     def cycle_structure(self):
         """Method to compute cycle structure of the AMG.
