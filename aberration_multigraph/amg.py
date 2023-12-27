@@ -94,6 +94,7 @@ class AberrationMultigraph:
             Returns numpy.inf if there are no cycles.
         """
         return min([len(c) for c in nx.simple_cycles(self.graph)])
+        # As per networkx documentation the following should work, but doesn't.
         # return nx.cycles.girth(self.graph)
 
     def cycles(self):
@@ -339,7 +340,7 @@ class AberrationMultigraph:
                                 if self.graph.nodes[i]['chromosome'] == chrom_1)
         chrom_2_nodes = set(i for i in self.graph.nodes
                                 if self.graph.nodes[i]['chromosome'] == chrom_2)
-        if len(chrom_1) != len(chrom_2):
+        if len(chrom_1_nodes) != len(chrom_2_nodes):
             return self
         start_1, stop_1 = min(chrom_1_nodes), max(chrom_1_nodes)
         start_2, stop_2 = min(chrom_2_nodes), max(chrom_2_nodes)
