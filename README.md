@@ -1,6 +1,21 @@
 # aberration_multigraph
 
-This project aims to study and analyze aberration multigraphs[^1], represented as `AberrationMultigraph`, as a model for chromosome aberrations.
+Aberration multigraphs were introduced by Sachs et al. in 2002 as a model for chromosome aberrations[^1].
+This project aims to study and analyze aberration multigraphs.
+Eventually, it is intended to apply them to model chromothripsis.
+
+Chromothripsis is a catastrophic phenomenon where the entire genome of a person shatters into thousands of pieces and rearranges itself.
+It is known to occur in the case of certain types of cancers.
+
+## Setup
+
+```bash{cmd}
+git clone https://github.com/siddharthsheth/aberration_multigraph
+pip install -e aberration_multigraph
+```
+
+## Data
+
 The data source is the PCAWG database[^3].
 Each file in the database is a collection of structural variations [^2].
 Each entry is represented as a `StructuralVariation` object.
