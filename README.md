@@ -9,12 +9,26 @@ It is known to occur in the case of certain types of cancers.
 
 ## Setup
 
+### Installation
 ```bash{cmd}
 git clone https://github.com/siddharthsheth/aberration_multigraph
-pip install -e aberration_multigraph
+cd aberration_multigraph
+pip install -e .
+mkdir -p data/nihms_patient_files/
+mkdir -p data/nihms_amg/P05-1657
 ```
 
-## Data
+### Pickle Patient Data
+```bash{cmd}
+python aberration_multigraph/nihms_patient.py
+```
+
+### Generate AMGs for a Patient
+```bash{cmd}
+python aberration_multigraph/data_script.py
+```
+
+<!-- ## Data
 
 The data source is the PCAWG database[^3].
 Each file in the database is a collection of structural variations [^2].
@@ -28,13 +42,13 @@ Both, `AberrationMultigraph` and `StructuralVariation`, are different kinds of g
 4. A telomere vertex is adjacent to a chromatin edge, while a non-telomere vertex is adjacent to exactly 1 edge of each type.
 
 ## Structural Variations
-1. A structural variation comprises 2 DSB edges and 1 rejoin edge. <!-- Each edge has exactly 2 vertices. -->
+1. A structural variation comprises 2 DSB edges and 1 rejoin edge.
 1 vertex in every DSB has degree 2 and the other has degree 1.
 2. Every SV need not correspond to a copy number variation.
-Reciprocal SVs do not cause CNV. <!-- However, those SVs that do correspond to CNVs are important. -->
+Reciprocal SVs do not cause CNV.
 3. A DSB edge can appear in at most 2 SVs.
 The same vertex of the DSB cannot participate in both SVs.
-4. There cannot be 2 DSB edges over successive base pairs, e.g., if $(u,v)$ and $(w,y)$ are consecutive DSB edges in the sorted list of DSB edges for a particular chromosome, then $w\ge v+1$.
+4. There cannot be 2 DSB edges over successive base pairs, e.g., if $(u,v)$ and $(w,y)$ are consecutive DSB edges in the sorted list of DSB edges for a particular chromosome, then $w\ge v+1$. -->
 
 
 [^1]: [Using graph theory to describe and model chromosome aberrations] (https://pubmed.ncbi.nlm.nih.gov/12385633/)
