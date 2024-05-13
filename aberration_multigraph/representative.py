@@ -22,10 +22,10 @@ class AMGRepresentative():
                 start, stop = min(chrom_nodes), max(chrom_nodes)
                 if amg in self.adjacency_list:
                     # self.adjacency_list[amg].add((amg.dsb_edges_total_twist(start,stop), amg.rejoin_edges_total_twist(start, stop), k+1))
-                    self.adjacency_list[amg].add((amg.rejoin_edges_total_twist(start, stop), k+1))
+                    self.adjacency_list[amg].add((amg._rejoin_edges_total_twist(start, stop), k+1))
                 else:
                     # self.adjacency_list[amg] = {(amg.dsb_edges_total_twist(start,stop), amg.rejoin_edges_total_twist(start, stop), k+1)}
-                    self.adjacency_list[amg] = {(amg.rejoin_edges_total_twist(start, stop), k+1)}
+                    self.adjacency_list[amg] = {(amg._rejoin_edges_total_twist(start, stop), k+1)}
 
             operation_number = self.chromosomes+1
             for i in range(self.chromosomes):
@@ -39,7 +39,7 @@ class AMGRepresentative():
                         start_1, stop_1 = min(chrom_1_nodes), max(chrom_1_nodes)
                         start_2, stop_2 = min(chrom_2_nodes), max(chrom_2_nodes)
                         # self.adjacency_list[amg].add((amg.dsb_edges_total_swap(start_1,start_2,stop_1,stop_2), amg.rejoin_edges_total_swap(start_1,start_2,stop_1,stop_2), operation_number))
-                        self.adjacency_list[amg].add((amg.rejoin_edges_total_swap(start_1,start_2,stop_1,stop_2), operation_number))
+                        self.adjacency_list[amg].add((amg._rejoin_edges_total_swap(start_1,start_2,stop_1,stop_2), operation_number))
                         operation_number += 1
     
     def compute_representative_graph(self):
@@ -87,7 +87,7 @@ class AMGRepresentative():
 
 
 if __name__ == '__main__':
-    amg_rep = AMGRepresentative(3, (1,1,1))
+    amg_rep = AMGRepresentative(2, (2,2,1))
     amg_rep.compute_amg_adjacency_list()
     # print(amg_rep.adjacency_list)
     # print(amg_rep.rejoin_name_map)

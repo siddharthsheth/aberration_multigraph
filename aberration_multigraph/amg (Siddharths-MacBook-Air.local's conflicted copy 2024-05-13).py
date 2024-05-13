@@ -1,8 +1,8 @@
 import networkx as nx
 import numpy as np
 from matplotlib import pyplot as plt
-from collections import Counter, defaultdict
-import pickle, os
+from collections import Counter
+import pickle
 
 class AberrationMultigraph:
     """
@@ -115,7 +115,7 @@ class AberrationMultigraph:
         Counter
             Counts the number of cycles by length in the AMG.
         """
-        return Counter([len(cycle) for cycle in self.cycles()])
+        return Counter(sorted([len(cycle) for cycle in self.cycles()]))
     
     def is_connected(self):
         """Method to check whether the AMG is connected or not.
@@ -127,61 +127,63 @@ class AberrationMultigraph:
         """
         return nx.is_connected(self.graph)
     
-    def display_config(self, view):
-        next_dict = {u: v for u,v in view.edges}
-        prev_dict = {v: u for u,v in view.edges}
-        print(next_dict)
-        print(prev_dict)
-        components = []
-        vertices = set(v for v in self.graph.nodes if (v in next_dict)^(v in prev_dict))
-        print(vertices)
-        while len(vertices)>0:
-            v = min(vertices)
-            vertices.discard(v)
-            print(f'popped {v}')
-            component = ''
-            if v in next_dict:
-                while v in next_dict:
-                    component += str(v)
-                    vertices.discard(v)
-                    v = next_dict[v]
-                component += str(v)
-                vertices.discard(v)
-                if component[0] in prev_dict:
-                    v = component[0]
-                    while v in prev_dict:
-                        v = prev_dict[v]
-                        component = str(v) + component
-                        vertices.discard(v)
-            else:
-                while v in prev_dict:
-                    component = str(v) + component
-                    vertices.discard(v)
-                    v = prev_dict[v]
-                component += str(v)
-                vertices.discard(v)
-                # v = prev_dict[v]
-            components.append(component)
-        print('done')
-        return ', '.join(components)
+    #TODO: Display cycle structure in a pretty way.
 
-    def init_config(self):
-        def filter_edge_init(u,v):
-            valid_edges = set(self.chromatin_edges).union(set(self.dsb_edges))
-            return (u,v) in valid_edges or (v,u) in valid_edges
-        init_view = nx.subgraph_view(self.graph, filter_edge=filter_edge_init)
-        # return self.display_config(init_view)
-        return init_view
+    # def display_config(self, view):
+    #     next_dict = {u: v for u,v in view.edges}
+    #     prev_dict = {v: u for u,v in view.edges}
+    #     print(next_dict)
+    #     print(prev_dict)
+    #     components = []
+    #     vertices = set(v for v in self.graph.nodes if (v in next_dict)^(v in prev_dict))
+    #     print(vertices)
+    #     while len(vertices)>0:
+    #         v = min(vertices)
+    #         vertices.discard(v)
+    #         print(f'popped {v}')
+    #         component = ''
+    #         if v in next_dict:
+    #             while v in next_dict:
+    #                 component += str(v)
+    #                 vertices.discard(v)
+    #                 v = next_dict[v]
+    #             component += str(v)
+    #             vertices.discard(v)
+    #             if component[0] in prev_dict:
+    #                 v = component[0]
+    #                 while v in prev_dict:
+    #                     v = prev_dict[v]
+    #                     component = str(v) + component
+    #                     vertices.discard(v)
+    #         else:
+    #             while v in prev_dict:
+    #                 component = str(v) + component
+    #                 vertices.discard(v)
+    #                 v = prev_dict[v]
+    #             component += str(v)
+    #             vertices.discard(v)
+    #             # v = prev_dict[v]
+    #         components.append(component)
+    #     print('done')
+    #     return ', '.join(components)
 
-    def final_config(self):
-        # print('final')
-        def filter_edge_final(u,v):
-            valid_edges = set(self.chromatin_edges).union(set(self.rejoin_edges))
-            return (u,v) in valid_edges or (v,u) in valid_edges
-        final_view = nx.subgraph_view(self.graph, filter_edge=filter_edge_final)
-        # print(final_view.edges)
-        # return self.display_config(final_view)
-        return final_view
+    # def init_config(self):
+    #     def filter_edge_init(u,v):
+    #         valid_edges = set(self.chromatin_edges).union(set(self.dsb_edges))
+    #         return (u,v) in valid_edges or (v,u) in valid_edges
+    #     init_view = nx.subgraph_view(self.graph, filter_edge=filter_edge_init)
+    #     # return self.display_config(init_view)
+    #     return init_view
+
+    # def final_config(self):
+    #     # print('final')
+    #     def filter_edge_final(u,v):
+    #         valid_edges = set(self.chromatin_edges).union(set(self.rejoin_edges))
+    #         return (u,v) in valid_edges or (v,u) in valid_edges
+    #     final_view = nx.subgraph_view(self.graph, filter_edge=filter_edge_final)
+    #     # print(final_view.edges)
+    #     # return self.display_config(final_view)
+    #     return final_view
 
     def draw(self):
         """Method to draw an AMG.
@@ -473,8 +475,7 @@ class AberrationMultigraph:
 
     @staticmethod
     def load_from_file(filename, path=''):
-        file = open(path+filename, 'rb')
-        return pickle.load(file)
+        return pickle.load(open(path+filename, 'rb'))
     
     def __hash__(self) -> int:
         return hash(self.dsb_edges+self.rejoin_edges)

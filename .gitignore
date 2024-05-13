@@ -6,6 +6,10 @@
 dsb_analysis/
 *.log
 data/*.gz
+*.pickle
+
+aberration_multigraph/amg_chromothripsis.py
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

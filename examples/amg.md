@@ -49,7 +49,6 @@ amg = AberrationMultigraph((('A','B'), ('C','D'), ('E','F'), ('G','H')),
 print(f"""
         Number of chromosomes: {amg.num_chromosome}
         Diameter: {amg.diameter()}
-        Girth: {amg.girth()}
         Cycle structure: {amg.cycle_structure()}
         """)
 

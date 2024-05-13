@@ -49,8 +49,7 @@ class AMGGenerator:
         free_vertices = [(len(dsb_vertices)-2, i) for i in dsb_vertices]
         self.amg_counter = 0
         hq.heapify(free_vertices)
-        rejoinings = []
-        return self._gen_rejoin_perms(rejoinings, free_vertices)
+        return self._gen_rejoins([], free_vertices)
 
     def count_amgs(self):
         """Counts the number of AMGs with this DSB distribution.
@@ -64,15 +63,15 @@ class AMGGenerator:
         # TODO: count the AMGs without constructing them.
         return self.amg_counter
 
-    def _gen_rejoin_perms(self, rejoinings, free_vertices):
+    def _gen_rejoins(self, rejoins, free_verts):
         """A helper method that recursively iterates over all possible rejoin 
          edge combinations and generates AMGs.
 
         Parameters
         ----------
-        rejoinings : list
+        rejoins : list
             A list of pairs of rejoin edges created so far.
-        free_vertices : list
+        free_verts : list
             Heap of free vertices ordered by number of free vertices at time of
              insertion into the heap.
 
@@ -81,41 +80,36 @@ class AMGGenerator:
         AberrationMultigraph
             An AMG with this DSB distribution.
         """
-        _, vertex = hq.heappop(free_vertices)
+        _, v = hq.heappop(free_verts)
         # If there is only one unmatched vertex left, pair it to this vertex 
         # and generate an AMG.
         # Else, pair this vertex with all remaining vertices and generate AMGs
         # recursively.
-        if len(free_vertices) == 1:
-            _, last_vertex = hq.heappop(free_vertices)
+        if len(free_verts) == 1:
+            _, u = hq.heappop(free_verts)
             amg = AberrationMultigraph(self.chromatins,
                                         self.dsbs,
-                                        rejoinings+[(vertex, last_vertex)],
+                                        rejoins+[(v, u)],
                                         str(self.amg_counter))
             if amg.is_connected():
                 self.amg_counter += 1
                 yield amg
         else:
-            for _, vertex_to_pair in free_vertices:
-                if vertex_to_pair != self.dsb_pair[vertex]:
-                    new_free_vertices = self._get_new_free_vertices(
-                                                            free_vertices,
-                                                            vertex,
-                                                            vertex_to_pair)
-                    new_rejoinings = rejoinings + [(vertex, vertex_to_pair)]
-                    yield from self._gen_rejoin_perms(new_rejoinings,
-                                                      new_free_vertices)
+            for _, w in free_verts:
+                if w != self.dsb_pair[v]:
+                    new_free_verts = self._remaining_verts(free_verts, v, w)
+                    new_rejoins = rejoins + [(v, w)]
+                    yield from self._gen_rejoins(new_rejoins, new_free_verts)
 
-    def _get_new_free_vertices(self, free_vertices, vertex, vertex_to_pair):
-        new_free_vertices = []
-        for priority, unpaired_vertex in free_vertices:
-            if (self.dsb_pair[unpaired_vertex] == vertex
-                    or self.dsb_pair[unpaired_vertex] == vertex_to_pair):
-                new_free_vertices.append((priority-1, unpaired_vertex))
-            elif unpaired_vertex != vertex_to_pair:
-                new_free_vertices.append((priority-2, unpaired_vertex))
-        hq.heapify(new_free_vertices)
-        return new_free_vertices
+    def _remaining_verts(self, free_verts, v, w):
+        new_free_verts = []
+        for priority, u in free_verts:
+            if self.dsb_pair[u] == v or self.dsb_pair[u] == w:
+                new_free_verts.append((priority-1, u))
+            elif u != w:
+                new_free_verts.append((priority-2, u))
+        hq.heapify(new_free_verts)
+        return new_free_verts
     
     def _get_dsbs(self):
         """Helper method to generate all DSB edges.
@@ -169,13 +163,13 @@ class AMGGenerator:
         """
         cycles = defaultdict(int)
         diameters = defaultdict(int)
-        girths = defaultdict(int)
+        # girths = defaultdict(int)         # Method not supported by networkx
         for amg in self.generate_amgs():
             cs = amg.cycle_structure()
             s_cs = [f'{i}*{cs[i]}' if cs[i]!=1 else str(i) for i in sorted(cs)]
             cycles['+'.join(s_cs)] += 1
             diameters[amg.diameter()] += 1
-            girths[amg.girth()] += 1
+            # girths[amg.girth()] += 1
         print(f'TOTAL NUMBER OF AMGS: {self.amg_counter}')
         print('\nDISTRIBUTION BY CYCLE STRUCTURE')
         for c in cycles:
@@ -183,9 +177,9 @@ class AMGGenerator:
         print('\nDISTRIBUTION BY DIAMETER')
         for d in sorted(diameters):
             print(f'{d}: {diameters[d]}')
-        print('\nDISTRIBUTION BY GIRTH')
-        for g in sorted(girths):
-            print(f'{g}: {girths[g]}')
+        # print('\nDISTRIBUTION BY GIRTH')
+        # for g in sorted(girths):
+        #     print(f'{g}: {girths[g]}')
 
     def full_report(self, file):
         """Writes a detailed report containing the statistics of each AMG with
