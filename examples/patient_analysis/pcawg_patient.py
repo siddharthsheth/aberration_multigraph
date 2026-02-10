@@ -1,4 +1,4 @@
-from aberration_multigraph.sv import BreakLocation, SVVertex, StructuralVariation, CNSegment
+from examples.patient_analysis.sv_utils import BreakLocation, SVVertex, StructuralVariation, CNSegment
 from collections import defaultdict
 import os
 

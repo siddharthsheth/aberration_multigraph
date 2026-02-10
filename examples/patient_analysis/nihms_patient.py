@@ -1,4 +1,4 @@
-from aberration_multigraph.sv import BreakLocation
+from examples.patient_analysis.sv_utils import BreakLocation
 from aberration_multigraph.incomplete_amg import IncompleteAMG
 import os
 import pickle
@@ -111,9 +111,9 @@ if __name__ == '__main__':
             r1 = (int(entry[2]), int(entry[4]), entry[3])
             r2 = (int(entry[5]), int(entry[7]), entry[6])
             patient.add_rejoin((r1, r2))
-    for pat_id in patients:
-        patients[pat_id].breakpoints.sort()
-        patients[pat_id].save_to_file(path='nihms_patient_files/')
+    for patient in patients.items():
+        patient.breakpoints.sort()
+        patient.save_to_file(path='nihms_patient_files/')
         
     patients = [NIHMSPatient.load_from_file(file, 'nihms_patient_files/')
                             for file in os.listdir('nihms_patient_files/')]

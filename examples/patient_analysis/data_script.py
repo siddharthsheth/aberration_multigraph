@@ -1,8 +1,7 @@
 import os
-import pickle
 from collections import Counter
 from aberration_multigraph.amg import AberrationMultigraph
-from aberration_multigraph.nihms_patient import NIHMSPatient
+from examples.patient_analysis.nihms_patient import NIHMSPatient
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
 

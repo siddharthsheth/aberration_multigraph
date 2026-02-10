@@ -1,16 +1,37 @@
+"""
+AMG generation utilities.
+
+This module provides a brute-force generator for aberration multigraphs (AMGs)
+with a fixed number of chromosomes and a fixed distribution of double-strand
+breaks (DSBs) per chromosome.
+
+Model
+-----
+Each chromosome contributes two telomeres and a specified number of DSBs.
+Each DSB introduces two free ends, which must be paired via *rejoin edges*.
+An AMG corresponds to a perfect matching of all free ends such that no end is
+rejoined with its original DSB partner. Only connected multigraphs are retained.
+
+Due to the combinatorial explosion in the number of perfect matchings, this
+implementation is intended for small instances and exploratory use.
+"""
+
 import heapq as hq
 from aberration_multigraph.amg import AberrationMultigraph
 from collections import defaultdict
 
 class AMGGenerator:
     """
-    This class represents an object that generates all possible AMGs with
-     a specified number of chromosomes and an iterable specifying the number of
-     double-strand breaks per chromosome.
-    It uses a brute-force approach.
+    Generator for all aberration multigraphs (AMGs) with a fixed DSB distribution.
+
+    The generator enumerates all valid rejoinings of DSB ends using a recursive
+    backtracking algorithm with simple constraint propagation. At each step, the
+    most constrained free vertex is paired first to reduce branching.
     """
     def __init__(self, num_chromosomes, num_dsbs, labels=None):
         """
+        Initialize an AMG generator.
+
         Parameters
         ----------
         num_chromosomes : int
@@ -18,8 +39,16 @@ class AMGGenerator:
         num_dsbs : iterable
             The number of DSBs per chromosome.
         labels : str, optional
-            Names of AMG vertices, by default None
+            Vertex labels. If ``None``, vertices are labeled consecutively
+            by integers.
+
+        Notes
+        -----
+        The total number of vertices is
+
+        ``2 * sum(num_dsbs) + 2 * num_chromosomes``.
         """
+
         if len(num_dsbs) != num_chromosomes:
             print('Mismatch')               #TODO raise ValueError
         self.num_chromosomes = num_chromosomes
@@ -27,23 +56,32 @@ class AMGGenerator:
         self.vertices = self._get_labels() if labels is None else labels
         #TODO check length of labels matches number of vertices and all labels
         # are unique
+
+        # Structural edges
         self.dsbs = self._get_dsbs()
         self.chromatins = self._get_chromatins()
+
+        # Map each DSB end to its original partner
         self.dsb_pair = dict()
-        self.amg_counter = 1
         for i, j in self.dsbs:
             self.dsb_pair[i] = j
             self.dsb_pair[j] = i
         
-    def generate_amgs(self):
-        """This method constructs all possible AMGs for this DSB distribution.
-
-        It returns a generator that builds the AMGs.
+        # Counter for generated AMGs
+        self.amg_counter = 1
         
+    def generate_amgs(self):
+        """
+        Generate all connected AMGs consistent with this DSB distribution.
+
         Returns
         -------
-        generator
-            A generator that iterates over the AMGs with this DSB distribution.
+        generator of AberrationMultigraph
+            A generator yielding AMGs one at a time.
+
+        Side Effects
+        ------------
+        Resets and updates ``self.amg_counter``.
         """
         dsb_vertices = set(u for u,_ in self.dsbs).union(set(v for _,v in self.dsbs))
         free_vertices = [(len(dsb_vertices)-2, i) for i in dsb_vertices]
@@ -52,39 +90,45 @@ class AMGGenerator:
         return self._gen_rejoins([], free_vertices)
 
     def count_amgs(self):
-        """Counts the number of AMGs with this DSB distribution.
+        """
+        Count the number of AMGs with this DSB distribution.
 
         Returns
         -------
         int
-            The number of AMGs wit this DSB distribution.
+            Number of AMGs.
+
+        Notes
+        -----
+        This method is currently a placeholder. Counting is performed implicitly
+        during generation.
         """
         self.amg_counter = 0
         # TODO: count the AMGs without constructing them.
         return self.amg_counter
 
     def _gen_rejoins(self, rejoins, free_verts):
-        """A helper method that recursively iterates over all possible rejoin 
-         edge combinations and generates AMGs.
+        """
+        Recursively enumerate all valid rejoin matchings.
 
         Parameters
         ----------
-        rejoins : list
-            A list of pairs of rejoin edges created so far.
+        rejoins : list of tuple
+            Rejoin edges fixed so far.
         free_verts : list
-            Heap of free vertices ordered by number of free vertices at time of
-             insertion into the heap.
+            Heap of unmatched vertices, prioritized by remaining matching
+            flexibility.
 
         Yields
         ------
         AberrationMultigraph
-            An AMG with this DSB distribution.
+            A connected AMG obtained by completing the current partial matching.
         """
+        if len(free_verts) == 0:
+            return
         _, v = hq.heappop(free_verts)
-        # If there is only one unmatched vertex left, pair it to this vertex 
-        # and generate an AMG.
-        # Else, pair this vertex with all remaining vertices and generate AMGs
-        # recursively.
+        # Base case: if there is only one unmatched vertex left,
+        #  pair it to this vertex and generate an AMG.
         if len(free_verts) == 1:
             _, u = hq.heappop(free_verts)
             amg = AberrationMultigraph(self.chromatins,
@@ -94,6 +138,8 @@ class AMGGenerator:
             if amg.is_connected():
                 self.amg_counter += 1
                 yield amg
+        # Else, pair this vertex with all remaining vertices and generate AMGs
+        #  recursively.
         else:
             for _, w in free_verts:
                 if w != self.dsb_pair[v]:
@@ -102,6 +148,21 @@ class AMGGenerator:
                     yield from self._gen_rejoins(new_rejoins, new_free_verts)
 
     def _remaining_verts(self, free_verts, v, w):
+        """
+        Update the heap of free vertices after pairing ``v`` and ``w``.
+
+        Parameters
+        ----------
+        free_verts : list
+            Current heap of free vertices.
+        v, w : int
+            Vertices paired at the current recursion step.
+
+        Returns
+        -------
+        list
+            Updated heap reflecting reduced matching options.
+        """
         new_free_verts = []
         for priority, u in free_verts:
             if self.dsb_pair[u] == v or self.dsb_pair[u] == w:
@@ -112,12 +173,13 @@ class AMGGenerator:
         return new_free_verts
     
     def _get_dsbs(self):
-        """Helper method to generate all DSB edges.
+        """
+        Generate all DSB edges implied by the chromosome specification.
 
         Returns
         -------
-        list
-            List of DSB edges for this DSB distribution.
+        list of tuple
+            DSB edges.
         """
         dsbs = []
         label = iter(self.vertices)
@@ -129,22 +191,24 @@ class AMGGenerator:
         return dsbs
 
     def _get_labels(self):
-        """Method to generate vertex names if these are not provided.
+        """
+        Generate default vertex labels.
 
         Returns
         -------
         list
-            List of vertex labels.
+            Consecutive integer labels.
         """
         return list(range(2*sum(self.num_dsbs)+2*self.num_chromosomes))
     
     def _get_chromatins(self):
-        """Method to generate chromatin edges.
+        """
+        Generate chromatin edges encoding chromosome structure.
 
         Returns
         -------
-        list
-            List of chromatin edges for this DSB distribution.
+        list of tuple
+            Chromatin edges.
         """
         edges = []
         label = iter(self.vertices)
@@ -155,11 +219,13 @@ class AMGGenerator:
         return edges
     
     def summarize(self):
-        """Prints summarized information of all AMGs with this DSB distribution.
+        """
+        Print summary statistics over all generated AMGs.
 
-        This method iterates over all AMGs with this DSB distribution and prints
-         the frequency distribution of AMGs by cycle structure, diameter and
-         girth.
+        Reported statistics include:
+        - Total number of AMGs
+        - Distribution by cycle structure
+        - Distribution by diameter
         """
         cycles = defaultdict(int)
         diameters = defaultdict(int)
@@ -182,25 +248,23 @@ class AMGGenerator:
         #     print(f'{g}: {girths[g]}')
 
     def full_report(self, file):
-        """Writes a detailed report containing the statistics of each AMG with
-         this DSB distribution.
+        """
+        Write a detailed per-AMG report to a file.
 
         Parameters
         ----------
-        file : file
-            The file where the report is written.
+        file : str
+            Path to the output file.
         """
         # TODO: make this a CSV file?
         with open(file, 'w') as output:
             output.write("""DIAMETER\t
-                            GIRTH\t
                             CYCLE STRUCTURE\t\t
                             CYCLES\t\t\t
                             INIT CONFIG\t\t\t\t\t\t
                             FINAL CONFIG\n""")
             for amg in self.generate_amgs():
                 diameter = amg.diameter()
-                girth = amg.girth()
                 cs = amg.cycle_structure()
                 cycles = ','.join('('+ ','.join(str(c) for c in cycle)
                                     + ')' for cycle in amg.cycles())
@@ -212,17 +276,7 @@ class AMGGenerator:
                                         for u,v in amg.final_config().edges)
                 # final_config = amg.final_config()
                 output.write(f"""{diameter}\t\t
-                                {girth}\t\t
                                 {cycle_struct}\t\t\t
                                 {cycles}\t\t
                                 {init_config}\t\t
                                 {final_config}\n""")
-
-    def full_csv_report(self, file):
-        #TODO: deprecated
-        with open(file, 'w') as output:
-            for amg in self.generate_amgs():
-                diameter = amg.diameter()
-                cs = amg.cycle_structure()
-                cycle_struct = '+'.join(str(cs[i]) for i in sorted(cs))
-                output.write(f'{diameter}, {cycle_struct}\n')

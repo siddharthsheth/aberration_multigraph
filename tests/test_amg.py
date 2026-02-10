@@ -11,18 +11,18 @@ class TestAMG(unittest.TestCase):
                                    [(4,5), (3,2)],
                                    [(3,4), (5,2)])
 
-        self.assertEqual(amg.chromatin_edges, ((1,2), (3,4), (5,6)))
-        self.assertEqual(amg.dsb_edges, ((2,3), (4,5)))
-        self.assertEqual(amg.rejoin_edges, ((2,5), (3,4)))
+        self.assertEqual(amg.chromatins, ((1,2), (3,4), (5,6)))
+        self.assertEqual(amg.dsbs, ((2,3), (4,5)))
+        self.assertEqual(amg.rejoins, ((2,5), (3,4)))
 
     def test_labeled_vertex(self):
         amg = AberrationMultigraph([('A','B'), ('C','D'), ('E','F')],
                                    [('B','C'), ('D','E')],
                                    [('B','E'), ('C','D')])
 
-        self.assertEqual(amg.chromatin_edges, (('A','B'), ('C','D'), ('E','F')))
-        self.assertEqual(amg.dsb_edges, (('B','C'), ('D','E')))
-        self.assertEqual(amg.rejoin_edges, (('B','E'), ('C','D')))
+        self.assertEqual(amg.chromatins, (('A','B'), ('C','D'), ('E','F')))
+        self.assertEqual(amg.dsbs, (('B','C'), ('D','E')))
+        self.assertEqual(amg.rejoins, (('B','E'), ('C','D')))
     
     def test_num_chromosome(self):
         chromatin = [(1,2),(3,4),(5,6),(7,8),(9,10),(11,12),(13,14),(15,16)]
