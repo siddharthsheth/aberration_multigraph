@@ -11,9 +11,9 @@ This example demonstrates how to use `IncompleteAMG` to count and enumerate all 
 ## Defining an Incomplete AMG
 
 We specify:
-	•	the chromatin backbone,
-	•	the DSB edges,
-	•	and a partial set of rejoin edges.
+- the chromatin backbone,
+- the DSB edges,
+- and a partial set of rejoin edges.
 
 ```python{cmd=true, id=main, continue=setup}
 chromatin = [
