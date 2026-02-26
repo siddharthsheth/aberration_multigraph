@@ -1,7 +1,7 @@
 import os
 from collections import defaultdict
-from examples.patient_analysis.nihms_patient import NIHMSPatient
-from examples.patient_analysis.sv_utils import BreakLocation
+from nihms_patient import NIHMSPatient
+from sv_utils import BreakLocation
 
 def cycle_structure_str(cs):
     cs_str = ''
@@ -11,7 +11,7 @@ def cycle_structure_str(cs):
 
 
 dir_path = os.path.dirname(os.path.realpath(__file__))
-os.chdir(dir_path+'/../data/')
+os.chdir(dir_path+'/../../data/')
 data_file = 'P05-1657.pickle'
     
 patient = NIHMSPatient.load_from_file(data_file, 'nihms_files_backup/')
@@ -45,4 +45,5 @@ for subset, twist_edges in subset_twist_edge_pairs:
             edge_pairs[edge] = (related_pairs, related_cs)
     output[subset] = edge_pairs
 
-print(output)
+for key, value in output.items():
+    print(f'{key}: {value}')

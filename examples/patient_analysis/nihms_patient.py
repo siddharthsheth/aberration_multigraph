@@ -1,4 +1,4 @@
-from examples.patient_analysis.sv_utils import BreakLocation
+from sv_utils import BreakLocation
 from aberration_multigraph.incomplete_amg import IncompleteAMG
 import os
 import pickle
@@ -95,7 +95,7 @@ class NIHMSPatient:
 
 if __name__ == '__main__':
     dir_path = os.path.dirname(os.path.realpath(__file__))
-    os.chdir(dir_path+'/../data')
+    os.chdir(dir_path+'/../../data')
     data_file = 'nihms.csv'
     patients = {}
     with open(data_file) as file:
@@ -111,7 +111,11 @@ if __name__ == '__main__':
             r1 = (int(entry[2]), int(entry[4]), entry[3])
             r2 = (int(entry[5]), int(entry[7]), entry[6])
             patient.add_rejoin((r1, r2))
-    for patient in patients.items():
+    print(os.getcwd())
+    if not os.path.isdir('nihms_patient_files/'):
+        os.mkdir('nihms_patient_files/')
+    for pat_id, patient in patients.items():
+        print(f"Saving patient {pat_id}")
         patient.breakpoints.sort()
         patient.save_to_file(path='nihms_patient_files/')
         
