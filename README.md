@@ -14,18 +14,19 @@ It is known to occur in the case of certain types of cancers.
 git clone https://github.com/siddharthsheth/aberration_multigraph
 cd aberration_multigraph
 pip install -e .
-mkdir -p data/nihms_patient_files/
-mkdir -p data/nihms_amg/P05-1657
 ```
 
 ### Pickle Patient Data
+The following command saves the data for each patient as an `IncompleteAMG` object in pickled format at location `aberration_multigraph/data/nihms_files/`
 ```bash{cmd}
-python aberration_multigraph/nihms_patient.py
+python examples/patient_analysis/nihms_patient.py
 ```
 
 ### Generate AMGs for a Patient
+The following command recreates all possible completed AMGs for a patient using a file created in the previous section.
+
 ```bash{cmd}
-python aberration_multigraph/data_script.py
+python examples/patient_analysis/nihms_amg.py
 ```
 
 <!-- ## Data
